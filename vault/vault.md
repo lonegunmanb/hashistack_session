@@ -28,13 +28,27 @@ paginate: true
 
 ---
 
-# 一个简单的例子
+# Vault 架构
 
-我们将以 Docker 在本地启动 Postgres 数据库
+![width:900px](https://raw.githubusercontent.com/lonegunmanb/essential-vault-pic/main/1616989467747-image.png)
+
+---
+
+# Vault 插件生态
+
+Secret Engine 是 Vault 用来存储机密，或是执行加解密的组件。
+Auth Method 是 Vault 用来实现 Vault 用户身份认证的组件
+二者相结合，构建了丰富的生态体系
+
+![width:750px](https://developer.hashicorp.com/_next/image?url=https%3A%2F%2Fcontent.hashicorp.com%2Fapi%2Fassets%3Fproduct%3Dtutorials%26version%3Dmain%26asset%3Dpublic%252Fimg%252Fvault%252Fvault-triangle.png%26width%3D1641%26height%3D973&w=1920&q=75)
+
+# 两个简单的例子
+
+我们将以 Docker 在本地启动 Postgres 数据库和 Redis，模拟生产环境服务
 
 然后使用测试版本 Vault 服务管理它的账号权限
 
-最后模拟真实应用访问 Vault 服务，读取一组动态的用户名密码
+然后模拟真实应用访问 Vault 服务，读取一组动态的用户名密码
 
 ---
 
@@ -51,6 +65,7 @@ paginate: true
 
 ```shell
 docker run \
+    -d \
     --name learn-postgres \
     -e POSTGRES_USER=root \
     -e POSTGRES_PASSWORD=rootpassword \
@@ -344,18 +359,73 @@ consul-template -template "config.toml.tplt:config.toml" -config "ct_config.hcl"
 vault list sys/leases/lookup/database/creds/readonly
 vault lease lookup database/creds/readonly/<lease_id>
 ```
----
-
-# Vault 架构
-
-![width:900px](https://raw.githubusercontent.com/lonegunmanb/essential-vault-pic/main/1616989467747-image.png)
 
 ---
 
-# Vault 插件生态
+# 启动 redis
 
-Secret Engine 是 Vault 用来存储机密，或是执行加解密的组件。
-Auth Method 是 Vault 用来实现 Vault 用户身份认证的组件
-二者相结合，构建了丰富的生态体系
+```shell
+docker run --name redis -d -p 6379:6379 redis
+docker run -it --rm --network=host redis redis-cli
+ACL SETUSER user
+ACL SETUSER user on >pass ~* &* +@all
+```
 
-![width:750px](https://developer.hashicorp.com/_next/image?url=https%3A%2F%2Fcontent.hashicorp.com%2Fapi%2Fassets%3Fproduct%3Dtutorials%26version%3Dmain%26asset%3Dpublic%252Fimg%252Fvault%252Fvault-triangle.png%26width%3D1641%26height%3D973&w=1920&q=75)
+---
+
+# 写入 Redis 配置
+
+操作者：`admin`
+
+```shell
+vault write database/config/my-redis-database \
+  plugin_name="redis-database-plugin" \
+  host="localhost" \
+  port=6379 \
+  username=user \
+  password="pass" \
+  allowed_roles="my-*-role"
+vault write -force database/rotate-root/my-redis-database
+```
+
+---
+
+# 新增 Redis Role
+
+操作者：`admin`
+
+```shell
+vault write database/roles/my-dynamic-role \
+    db_name="my-redis-database" \
+    creation_statements='["+@admin"]' \
+    default_ttl="1m" \
+    max_ttl="1h"
+```
+
+```shell
+vault policy write redis -<<EOF
+path "database/creds/my-dynamic-role" {
+  capabilities = [ "read" ]
+}
+EOF
+```
+
+---
+
+# 创建用来连接 Redis 的 Vault Token
+
+操作者：`admin`
+
+```shell
+vault token create -policy=redis
+```
+
+---
+
+# 尝试读取 Redis 凭据
+
+操作者：`app`
+
+```shell
+vault read database/creds/my-dynamic-role
+```
