@@ -5,3 +5,15 @@
 动态秘密是根据需要生成的，并且对于客户端来说是唯一的，而不是提前定义并共享的静态秘密。 Vault 将每个动态机密与租约相关联，并在租约到期时自动销毁凭据。 Vault 支持各种系统的动态机密，并且可以通过插件轻松扩展。
 
 本样例为大家简要演示一个通过动态机密管理数据库账户以及应用程序的配置文件的[例子](vault.md)。
+
+编译 pdf 命令：
+
+```shell
+docker run -v $(pwd):/src -w /src marpteam/marp-cli --pdf vault.md
+```
+
+Windows 下：
+
+```shell
+docker run -v ${pwd}:/src -w /src marpteam/marp-cli --pdf vault.md
+```
