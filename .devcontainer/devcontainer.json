@@ -12,11 +12,6 @@
       "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
     "customizations": {
       "vscode": {
-        "settings": {
-          "go.toolsManagement.checkForUpdates": "local",
-          "go.useLanguageServer": true,
-          "go.goroot": "/usr/local/go"
-        },
         "extensions": [
           "hashicorp.terraform",
           "golang.Go",
