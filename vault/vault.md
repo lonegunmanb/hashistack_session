@@ -196,7 +196,7 @@ vault token create -policy=app
 
 # 设置 `app` 环境变量
 
-操作者：`admin`
+操作者：`app`
 
 设置环境变量
 
