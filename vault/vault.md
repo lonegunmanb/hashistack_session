@@ -357,7 +357,8 @@ consul-template -template "config.toml.tplt:config.toml" -config "ct_config.hcl"
 
 ```shell
 vault list sys/leases/lookup/database/creds/readonly
-vault lease lookup database/creds/readonly/<lease_id>
+LEASE_ID=$(vault list -format=json sys/leases/lookup/database/creds/readonly | jq -r ".[0]")
+vault lease lookup database/creds/readonly/$LEASE_ID
 ```
 
 ---
