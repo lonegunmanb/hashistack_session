@@ -42,6 +42,8 @@ Auth Method 是 Vault 用来实现 Vault 用户身份认证的组件
 
 ![width:750px](https://developer.hashicorp.com/_next/image?url=https%3A%2F%2Fcontent.hashicorp.com%2Fapi%2Fassets%3Fproduct%3Dtutorials%26version%3Dmain%26asset%3Dpublic%252Fimg%252Fvault%252Fvault-triangle.png%26width%3D1641%26height%3D973&w=1920&q=75)
 
+---
+
 # 两个简单的例子
 
 我们将以 Docker 在本地启动 Postgres 数据库和 Redis，模拟生产环境服务
@@ -279,6 +281,12 @@ vault lease revoke database/creds/readonly/$LEASE_ID
 
 ```shell
 vault list sys/leases/lookup/database/creds/readonly
+```
+
+确认数据库用户已被删除
+
+```shell
+docker exec -i learn-postgres psql -U root -c "SELECT usename, valuntil FROM pg_user;"
 ```
 
 ---
