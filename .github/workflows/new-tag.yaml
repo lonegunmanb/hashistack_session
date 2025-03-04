@@ -40,4 +40,4 @@ jobs:
           platforms: |
             linux/amd64
           tags: |
-            ${{ env.DOCKERHUB_REPO }}:latest
+            ${{ secrets.DOCKER_SERVER_URL }}/azterraform:latest
