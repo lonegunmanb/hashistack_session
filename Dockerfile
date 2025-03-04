@@ -10,12 +10,7 @@ ARG GOLANG_IMAGE_TAG=1.24.0
 ARG TERRAFORM_VERSION=1.11.0
 ARG VAULT_VERSION=1.18.5
 ARG TARGETARCH
-ARG HOME_DIR=/home/runtimeuser
-ENV GOPATH=${HOME_DIR}/go
-ENV GOROOT=/usr/local/go
-ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-ENV HOME=${HOME_DIR}
-COPY --from=build /go/bin /usr/local/go/bin
+COPY --from=build /go/bin /bin
 RUN apt update && apt install -y zip unzip wget docker.io && \
     curl '-#' -fL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
     unzip -q -o -d /bin/ /tmp/terraform.zip && \
