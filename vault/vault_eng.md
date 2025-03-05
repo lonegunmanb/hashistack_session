@@ -13,6 +13,8 @@ paginate: true
 
 In traditional R&D scenarios, we often encounter issues such as: production database usernames and passwords being encoded in configuration files in plain text, or stored in an unsecured configuration management service in the production environment; tokens used by an application to call cloud service interfaces being hardcoded into the code and then accidentally leaked by a developer to a public GitHub repository, and so on.
 
+---
+
 Secrets sprawl describes such issues, where system secrets are scattered and stored in various unrelated locations in different forms. We neither know which systems store which secrets, nor which secrets have been accessed by which systems and people. Even if we discover that a secret has been leaked, we cannot be sure that immediately revoking the secret from the production environment will not jeopardize production environment, because we do not know which systems are still using these secrets.
 
 ---
@@ -24,7 +26,6 @@ In our daily work, we deal with a lot of secret information inevitably. In the p
 * Employees who know the secrets may leak them on purpose or take malicious actions after leaving the company
 * Developers accidentally leak secrets to public source code repositories on the Internet along with the code
 * Managing secrets for multiple systems is very troublesome, and cumbersome
-* Need to securely encrypt and store secrets, but don't want to expose the keys to the application to prevent the keys from being leaked along with the application after it is compromised
 
 ---
 
@@ -40,6 +41,9 @@ In our daily work, we deal with a lot of secret information inevitably. In the p
 * Auth Method: the component Vault uses to implement Vault user authentication.
 
 The combination of the two builds a rich ecosystem.
+
+---
+
 
 ![width:750px](https://developer.hashicorp.com/_next/image?url=https%3A%2F%2Fcontent.hashicorp.com%2Fapi%2Fassets%3Fproduct%3Dtutorials%26version%3Dmain%26asset%3Dpublic%252Fimg%252Fvault%252Fvault-triangle.png%26width%3D1641%26height%3D973&w=1920&q=75)
 
@@ -90,7 +94,7 @@ psql -U root -c "CREATE ROLE \"ro\" NOINHERIT;"
 Grant read permission on all tables to `ro` role:
 
 ```shell
-docker exec -i \
+sudo docker exec -i \
 learn-postgres \
 psql -U root -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"ro\";"
 ```
@@ -114,7 +118,7 @@ Operator: `admin`
 Set environment variables
 
 ```shell
-export VAULT_ADDR=[http://127.0.0.1:8200](http://127.0.0.1:8200)
+export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=root
 ```
 
@@ -141,6 +145,8 @@ username="root" \
 password="rootpassword"
 ```
 
+---
+
 Note that since `ssl` is not enabled for the database in this experiment, `?sslmode=disable` is specifically added to the end of the `connection_url` connection string. **Do not do this in a production system**.
 
 ---
@@ -158,7 +164,9 @@ GRANT ro TO "{{name}}";
 EOF
 ```
 
-The SQL statement contains templated fields {{name}}, {{password}} and {{expiration}}. These fields are populated when Vault creates credentials.
+---
+
+The SQL statement contains templated fields `{{name}}`, `{{password}}` and `{{expiration}}`. These fields are populated when Vault creates credentials.
 
 This will create a new role and grant the privileges of the role named `ro` that was previously created in Postgres to it.
 
@@ -220,7 +228,7 @@ vault read database/creds/readonly
 Test the connection to the Postgres database by listing all database users:
 
 ```shell
-docker exec -i \
+sudo docker exec -i \
 learn-postgres \
 psql -U root -c "SELECT usename, valuntil FROM pg_user;"
 ```
