@@ -230,7 +230,7 @@ Test the connection to the Postgres database by listing all database users:
 ```shell
 sudo docker exec -i \
 learn-postgres \
-psql -U root -c "SELECT usename, valuntil FROM pg_user;"
+psql -U <username> -d postgres -c "SELECT usename, valuntil FROM pg_user;"
 ```
 
 ---
@@ -246,6 +246,8 @@ List existing leases:
 ```shell
 vault list sys/leases/lookup/database/creds/readonly
 ```
+
+---
 
 Save lease id：
 
@@ -288,6 +290,8 @@ List existing leases again:
 ```shell
 vault list sys/leases/lookup/database/creds/readonly
 ```
+
+---
 
 Verify Database User Has Been Deleted
 

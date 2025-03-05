@@ -44,9 +44,9 @@ Auth Method 是 Vault 用来实现 Vault 用户身份认证的组件
 
 ---
 
-# 两个简单的例子
+# 简单的例子
 
-我们将以 Docker 在本地启动 Postgres 数据库和 Redis，模拟生产环境服务
+我们将以 Docker 在本地启动 Postgres 数据库，模拟生产环境服务
 
 然后使用测试版本 Vault 服务管理它的账号权限
 
@@ -66,7 +66,7 @@ Auth Method 是 Vault 用来实现 Vault 用户身份认证的组件
 我们使用 Docker 启动一个用户名为 `root`，密码为 `rootpassword` 的 Postgres 数据库实例：
 
 ```shell
-docker run \
+suod docker run \
     -d \
     --name learn-postgres \
     -e POSTGRES_USER=root \
@@ -224,7 +224,7 @@ vault read database/creds/readonly
 ```shell
 docker exec -i \
     learn-postgres \
-    psql -U root -c "SELECT usename, valuntil FROM pg_user;"
+    psql -U <username> -p postgres -c "SELECT usename, valuntil FROM pg_user;"
 ```
 
 ---
@@ -298,7 +298,7 @@ docker exec -i learn-postgres psql -U root -c "SELECT usename, valuntil FROM pg_
 安装：
 
 ```shell
-go install github.com/hashicorp/consul-template@v0.39.0
+go install github.com/hashicorp/consul-template@latest
 ```
 
 ---
@@ -367,74 +367,4 @@ consul-template -template "config.toml.tplt:config.toml" -config "ct_config.hcl"
 vault list sys/leases/lookup/database/creds/readonly
 LEASE_ID=$(vault list -format=json sys/leases/lookup/database/creds/readonly | jq -r ".[0]")
 vault lease lookup database/creds/readonly/$LEASE_ID
-```
-
----
-
-# 启动 redis
-
-```shell
-docker run --name redis -d -p 6379:6379 redis
-docker run -it --rm --network=host redis redis-cli
-ACL SETUSER user
-ACL SETUSER user on >pass ~* &* +@all
-```
-
----
-
-# 写入 Redis 配置
-
-操作者：`admin`
-
-```shell
-vault write database/config/my-redis-database \
-  plugin_name="redis-database-plugin" \
-  host="localhost" \
-  port=6379 \
-  username=user \
-  password="pass" \
-  allowed_roles="my-*-role"
-vault write -force database/rotate-root/my-redis-database
-```
-
----
-
-# 新增 Redis Role
-
-操作者：`admin`
-
-```shell
-vault write database/roles/my-dynamic-role \
-    db_name="my-redis-database" \
-    creation_statements='["+@admin"]' \
-    default_ttl="1m" \
-    max_ttl="1h"
-```
-
-```shell
-vault policy write redis -<<EOF
-path "database/creds/my-dynamic-role" {
-  capabilities = [ "read" ]
-}
-EOF
-```
-
----
-
-# 创建用来连接 Redis 的 Vault Token
-
-操作者：`admin`
-
-```shell
-vault token create -policy=redis
-```
-
----
-
-# 尝试读取 Redis 凭据
-
-操作者：`app`
-
-```shell
-vault read database/creds/my-dynamic-role
 ```
