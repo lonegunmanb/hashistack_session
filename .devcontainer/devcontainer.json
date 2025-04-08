@@ -8,7 +8,7 @@
           "--init",
           "--network=host"
       ],
-  postStartCommand: "sudo gpasswd -a $USER docker",
+  "postStartCommand": "sudo gpasswd -a $USER docker",
   "mounts": [ "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind" ],
     "customizations": {
       "vscode": {
