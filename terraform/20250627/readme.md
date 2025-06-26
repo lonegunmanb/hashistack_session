@@ -1,7 +1,7 @@
 ---
 marp: true
 
-theme: rose-pine
+theme: gaia
 paginate: true
 ---
 
