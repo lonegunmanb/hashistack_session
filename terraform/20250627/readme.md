@@ -7,11 +7,13 @@ paginate: true
 
 # 2025/06/27 Terraform 交流
 
+仅代表不成熟的个人观点
+
+与 HashiCorp 以及我的雇主无关
+
 ---
 
 # 1. Terraform Module 企业级最佳实践
-
-说实话，我对 Terraform Module 在企业中的最佳实践并没有太多的经验，但对于这里提到的一些问题，我有一些自己的看法。
 
 ---
 
@@ -220,3 +222,208 @@ deployment "east-coast" {
             ├── db
             └── network
 ```
+
+---
+
+# 性能优化：大型模块如何减少 `init/plan` 的耗时？
+
+不要让模块变大。
+
+包打天下的模块叫 [Terralith](https://mp.weixin.qq.com/s?__biz=MzI3Mzg4NTAxMw==&mid=2247484683&idx=1&sn=6442fe12e1622c0cbfe463cfa838a159&chksm=ea795c84ebadf33bd72521b89cf51d04cdadbd5577d987019a2013234af3f670584a181240a0&mpshare=1&scene=1&srcid=0626ewjnar9848TkxBrO9wMP&sharer_shareinfo=73450e8faeb495769692217f88e9ab42&sharer_shareinfo_first=73450e8faeb495769692217f88e9ab42&exportkey=n_ChQIAhIQvLtbCHtz9ORhvqt3w99kkhKfAgIE97dBBAEAAAAAANyBOuymDmsAAAAOpnltbLcz9gKNyK89dVj0X9ONXR6WayazIdNUoCwrSVbl6O1wV5Ecv0j4i0GRcaCaiHtuu6coHGVZGK9Q75loBvpGZcDCAEO5vLBkgYvqC32aVXG01pW8mEOfD6FeVHjLk1hFIXG9VemXi1NPnrdKm1bIi1cmFwko0p%2F6o3UGxyF1vvldXEsEzin5CILDvdMGrqGv6l1nm0zLHq%2FqsQrVdUYAVwN%2Fo3xqp%2F1Qr7CEpcmMS%2F6gibVsxhF6N80CBWkHgTzWrpMVCUWx4PPN8RiboxcrbGLRI8AFL8ixAEJGCidRXypeUwp0nJVS%2FpSn8vUTX6h0xo0IX0UCevzsjUw0qYGea6nGmOnY&acctmode=0&pass_ticket=fZMnEKSUayvw6aO%2BnGQC7jsoYybWbaMKSCoH3WxTsoXIIZQDh0HRdNp6pUr4C%2BBK&wx_header=0#rd) ，取意Terraform + Monolithic，即为单体 Terraform 风格
+
+Terralith 很大，很慢，很复杂，很容易出问题([视频](https://www.youtube.com/watch?v=wgzgVm7Sqlk))
+
+分层管理，控制爆炸半径
+
+---
+
+# 2. Sentinel Policy 在非 TFE 场景的实践
+
+---
+
+# 非 TFE 环境中，是否有推荐的策略实施方式
+
+`conftest` 我觉得不错，Opa 需要学习掌握一下写法
+
+`checkov` 因为是 Python 项目，更新规则会比较麻烦，但现在也支持 Opa 了
+
+重要的是好的规则库，而且自己能够定制化。
+
+要考虑多 Provider，例如 `aws` 和 `awscc`，`azurerm` 和 `azapi` 可能同时存在。
+
+---
+
+## 常见策略如资源加密、实例规格限制等，如何以较低成本落地
+
+首先构建中央管控的，标准的基础设施交付流水线，各产品组可以在在各自的代码库中集成（类似 AVM 的模板仓库创建的大量模块仓库），控制住流水线，就可以往流水线中安插各种规则限制
+
+---
+
+# 3. 多云与协作实践挑战
+
+---
+
+# 状态管理：Workspace 与目录结构在大规模场景下的优劣与风险
+
+`workspace` 在 Terraform 语境中有两个不同的含义，如果是 Terraform 命令行工具带有的 `workspace` 命令，我的建议是：不要用。[官方文档](https://developer.hashicorp.com/terraform/cli/workspaces#use-cases)也说的很清楚：
+
+>A common use for multiple workspaces is to create a parallel, distinct copy of a set of infrastructure to test a set of changes before modifying production infrastructure.
+
+仅为测试
+
+---
+
+# Terraform Cloud 或是 HCP Terraform 或是 TFE 的 workspace
+
+没用过。。。应该是必用的功能吧。
+
+---
+
+# 模块抽象：如何设计跨多云的统一接口模块
+
+我认为：[极不可能](https://mp.weixin.qq.com/s?__biz=MzI3Mzg4NTAxMw==&mid=2247484484&idx=1&sn=3034327f714cc3f71da6c67b53beb039&chksm=eaee8f94c05a0c59e19132ba3944c5bed28358eed97f541fa720dc36cfb9f70bbba9d11403f3&mpshare=1&scene=1&srcid=0626x0ODP24DpJ1UbeCLZz6w&sharer_shareinfo=5c592b6e2682b13261d21fdd0e6a1c4e&sharer_shareinfo_first=5c592b6e2682b13261d21fdd0e6a1c4e&exportkey=n_ChQIAhIQQg8odppoLrQyy8AY6GdkiBKfAgIE97dBBAEAAAAAAJxvKjYan%2FYAAAAOpnltbLcz9gKNyK89dVj0OxPK9ozebq1z4WGks7Oog0aSOOW8MYBz7UKXKydKNHzsktI8WDMKnG7IHndcrrEjtGjq6ju9peg%2FoDzWeVynDAMipO7suCKDQW%2FfxR7kyux%2BCzlZeJPUOmgDx%2Bs8lrt0bNZA0IcTN21%2BcGikeO0qDk7pHZ87sy7NlxCQsBqQzPSNxr34Qbid1UrMXmFYKtANqlN7BlSjOktFRWVXSQTd3zwSShToInH5tReaTbmOd%2BYQ9rjaQEnjq7i98gncG%2FqcQVfgag0Tp6PtnrnS8d1NaRMQsfdZ4ICCF%2B3kPnUgr9%2BdzAcohJ3KRYMsyxPRwpJxwaS34OAKM20L&acctmode=0&pass_ticket=o2UpJTZj0r3%2BLHaeB%2FVVmttiG38j1dBWyFjpxcJV0D9tbjivIXGSmBa1t2lZHlPW&wx_header=0#rd)
+
+不同云厂商的产品大相径庭，细节上差别很大
+
+细颗粒度的抽象（抽象虚拟机，抽象 VPC）基本不可能
+
+重新思考，以应用为基础抽象单元似乎可行（这是我们的鉴权微服务，它有两个实现，模块 A 可以部署在 A 云上，模块 B 可以部署在 B 云上），应用可以有一些共享的抽象接口，例如部署尺寸（大，超大，互联网一线大厂那么大，对应到不同云的 sku）
+
+---
+
+## 模块抽象：如何设计跨多云的统一接口模块
+
+我们仍然可以提供一些不同云上的基础模块，例如数据库、安全组，但这些模块仍然会带有浓重的各自云的痕迹
+
+想要完全依赖抽象，屏蔽掉云的各种细节去使用抽象模块接口部署个人认为不现实，也没有必要
+
+但可以部分实现，例如，基于 K8s、HashiCorp Nomad 提供统一的应用调度层，基于这种类似“云 OS”再去统一上层的部署是完全可行的
+
+---
+
+## 模块抽象：如何设计跨多云的统一接口模块
+
+我们目前的一个尝试方向：积累大量的模块，以及样例代码，构建一个 [RAG](https://aws.amazon.com/what-is/retrieval-augmented-generation/) 知识库
+
+尝试利用 AI 针对具体问题进行拆解、分层，选择合适的模块，人类用户选择预设的套餐型参数，AI 尝试将模块胶合在一起
+
+个人认为，灵活性上必然要做一些妥协和牺牲，换取便利性和效率
+
+---
+
+# 4. 如何看待国内在 Terraform 落地方面相比海外的接受度差异
+
+---
+
+# 碎片化问题
+
+根据最新可靠来源（ChatGPT 与 Gemini），2024 年 AWS、Azure 和 Google Cloud 在全球公有云（IaaS + PaaS）市场中的市占率大致如下：
+
+* Amazon Web Services (AWS)：约 31–32% 
+* Microsoft Azure：约 23–25% 
+* Google Cloud：约 11–12% 
+
+三个厂商合计占据全球公有云市场约 65–69% 的份额，普遍估算在**约 66–68%**之间
+
+---
+
+## 冷启动
+
+https://github.com/hashicorp/terraform-provider-aws
+https://github.com/hashicorp/terraform-provider-awscc
+https://github.com/hashicorp/terraform-provider-azurerm
+https://github.com/hashicorp/terraform-provider-google
+
+它们都是 HashiCorp 开发维护的
+
+覆盖这三个云（甚至只需要覆盖 AWS）就足以覆盖足够大的市场
+
+---
+
+# 国内云平台高度碎片化
+
+阿里云	~34%
+华为云	~16%
+中国电信	~15%
+腾讯云	~13%
+中国移动	~11%
+其他（百度云、联通云等）	~11%
+
+公有云本身在中国尚未成为主流，私有云、传统数据中心更常见
+
+鸡和蛋的冷启动问题
+
+---
+
+# 观念问题
+
+私有云更安全？
+老方法更可靠？
+
+当前的中国用 40 年走完别人上百年的路，结果就是上百年前的人和今天的 00 后 10 后同场竞技，而他们仍然掌握着关键决策权
+
+---
+
+# [科技三定律](https://www.forbes.com/sites/sap/2014/07/07/douglas-adams-technology-rules/)
+
+1. 任何在我出生时已经有的科技都是稀松平常的世界本来秩序的一部分。
+2. 任何在我15-35岁之间诞生的科技都是将会改变世界的革命性产物。
+3. 任何在我35岁之后诞生的科技都是违反自然规律要遭天谴的。
+
+---
+
+![alt text](image-1.png)
+
+---
+
+# 谨慎乐观
+
+[中国经济增速开始放缓对云和软件可能并非全是坏事](https://mp.weixin.qq.com/s?__biz=MzI3Mzg4NTAxMw==&mid=2247487747&idx=1&sn=c4ec87e47f56203987269b7e75fa960d&chksm=eae125b0d79a9ea00b8d515e85f33c8df1d208fdf1b870a5ba9a1338b0f75b6727c578dde216&mpshare=1&scene=1&srcid=0626AhSPfdJYGLwlkWVojq3R&sharer_shareinfo=9ebe260de228dcc95d0b0510fd0c2fb6&sharer_shareinfo_first=9ebe260de228dcc95d0b0510fd0c2fb6&exportkey=n_ChQIAhIQQaSAo8uN4KyjMy7UTCiGcRKfAgIE97dBBAEAAAAAABspBNDYfCYAAAAOpnltbLcz9gKNyK89dVj07pP%2BU1LOh0%2BDUo0Kikf1Xqdtv9kj98P%2FH%2BoQlCs9Y1ZpVQjpv2f6KdBQaovrCRegmIKgZ2YecI1%2B2fEDq%2BVRWomGzbmmrdYzyd30c%2B15vj76RNhAc3q%2BMvV80uHBv1GI%2FtdXY%2Fvm%2B9TAmUjTi7zgb6MCtIMKrZsgale4uj0BMCIq5LoXdlyZSynVMAl%2Fckva8SnCz3RKsSQgTrMycWmhnZ99SixWHWTNsSAlrn5pKaw0nNkl%2F2cjPGZLENre8R9h9WzdUcw7AhcPlZIpzw9WtKlr9oME6OA%2FmMRQgvY6lcvWIixezMzpi344FNkLKuS3qRWFQLS69YHx&acctmode=0&pass_ticket=SuhyFt0kExWP%2BxPgudjPDDZnIpTsLMRC2awSJebSjeaZbxX64%2FhqhT4MnV%2BZa4vM&wx_header=0#rd)
+
+[中国的云计算革命尚未开始](https://mp.weixin.qq.com/s?__biz=MzI3Mzg4NTAxMw==&mid=2247485306&idx=1&sn=69bc1d02f57f8c2caef57f77c8617fe3&chksm=ea4a93aea7f7c9407641c0630c47a3fc07cfb3704884b50f6d32baea637d97c2f45ef3a32dc7&mpshare=1&scene=1&srcid=0626fLOlLgq60cnVfOGR38yp&sharer_shareinfo=393afea9c20b3608ff261b8f3d2db87a&sharer_shareinfo_first=393afea9c20b3608ff261b8f3d2db87a&exportkey=n_ChQIAhIQ0GM8BIAdLZPb9FajrKnhSRKfAgIE97dBBAEAAAAAAPpyLU%2BVcBAAAAAOpnltbLcz9gKNyK89dVj0T8wpMWVtLAdr%2BSIB%2FW1RY7IkmykS6sAbPKTPUtp6icNgCvrUofAy1R2weEGcJo7mfo0o1Y93vOjFrjaH3oBlT6aRfvfa%2FzHmZMHHc1EaIyenqLxi8SeXghToSZdhA%2BdqqQz7EiOSHwFNGcxIOl6r9S2SJSCRmNCk9a3pk%2FE%2FJYQtXgxc6rWe6E41EiSu0gvk1Ct3iJYv3I2eazDD%2BwjeBq0tDDetHu2iBH%2F8azEHMKY7YNo8QL3mdPRZWinG9RBrxR9fJTB2BQE3WHZuQz%2BpBGhXOCuHDfyZGa%2F0eYXEHRPTnB4np96ysAj8OLRAa58xhQt5bG%2FpfHCe&acctmode=0&pass_ticket=j6bpJdOYChbVupLEFzBqEY0XIUskKtQlKw4zOdi6TsCcITb5PxDYOMEHIj4iMIP0&wx_header=0#rd)
+
+我们的问题在于，中国发展的太快了，我们还来不及消化掉旧观念、旧资产、旧人，就迎来了新观念、新资产、新人
+
+红利一代掌握的话语权，但他们是被上一代的工具（ITIL）塑造的
+
+工具塑造人（汽车决定现代城市的结构，计算机与网络决定现代人的工作、娱乐、交友方式）
+
+---
+
+# 谨慎乐观
+
+>批判的武器当然不能代替武器的批判，物质力量只能用物质力量来摧毁，但是理论一经掌握群众，也会变成物质力量。 理论只要说服人，就能掌握群众；而理论只要彻底，就能说服人。 —— 至圣先师
+
+![height:400px](image.png)
+
+---
+
+# 谨慎乐观
+
+在跑马圈地大跃进的时代，精细化管理只会让你圈地速度变慢
+
+试图说服成吉思汗采用现代化军事理论是没有意义的，你一年抢的地还没他一个星期跑的多，另外你也不可能把坦克飞机大炮卫星带回南宋
+
+假如飞机大炮的技术是有用的，那么关键不是让成吉思汗接受你的理论去用飞机大炮，而是组建一直使用飞机大炮的军队，让成吉思汗从能征善战变成能歌善舞
+
+大众宝马丰田并不是想穿了接受了电动车的技术路线，而是被特斯拉比亚迪们打的没有办法了
+
+---
+
+# 谨慎乐观
+
+[《创新者的窘境》](https://www.amazon.com/%E5%88%9B%E6%96%B0%E8%80%85%E7%9A%84%E7%AA%98%E5%A2%83-%E5%85%A8%E6%96%B0%E4%BF%AE%E8%AE%A2%E7%89%88-%E5%85%8B%E8%8E%B1%E9%A1%BF-%C2%A1%C3%A8%E5%85%8B%E9%87%8C%E6%96%AF%E5%9D%A6%E6%A3%AE/dp/B076TVM6H6)：
+
+>成熟企业致力于在成熟市场引入破坏性技术，而成功的新兴企业则发现了一个看重这种技术的新市场
+
+HashiCorp Terraform 一开始的用户并非世界 500 强，AWS 亦然
+
+新技术、新思想的落地，往往始于帝国的边疆，那些巨头看不上的角落种萌发出的，满脑子“弯道超车”的野蛮人
+
+与其等着老钱被说服，不如寻找有野心的新钱，武装起来，去抢老钱
+
+---
+
+# 谨慎乐观
+
+人总是要死的，老人死的早一点
