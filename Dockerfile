@@ -11,7 +11,6 @@ ARG TERRAFORM_VERSION=1.12.2
 ARG VAULT_VERSION=1.19.1
 ARG TARGETARCH
 COPY --from=build /go/bin /bin
-COPY ./setting.json /home/vscode/.vscode-remote/data/Machine/settings.json
 RUN apt update && apt install -y zip unzip wget docker.io && \
     curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash && \
     curl '-#' -fL -o /tmp/terraform.zip https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${TARGETARCH}.zip && \
